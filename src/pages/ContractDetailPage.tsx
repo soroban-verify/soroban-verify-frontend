@@ -5,6 +5,7 @@ import { getVerification } from '../lib/api'
 import { reproduceCommand } from '../lib/trust'
 import TrustTierExplainer from '../components/TrustTierExplainer'
 import HashCompare from '../components/HashCompare'
+import OwnershipClaimPanel from '../components/OwnershipClaimPanel'
 
 export default function ContractDetailPage() {
   const { network, contractId } = useParams<{ network: Network; contractId: string }>()
@@ -151,6 +152,11 @@ export default function ContractDetailPage() {
           {reproduceCommand(record.sourceRepo, record.commit, record.contractId)}
         </pre>
       </section>
+
+      <OwnershipClaimPanel
+        verificationId={record.id}
+        contractId={record.contractId}
+      />
     </div>
   )
 }

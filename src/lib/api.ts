@@ -101,6 +101,25 @@ export async function submitVerification(
 }
 
 /**
+ * Submit a Freighter-signed ownership claim over a verification record
+ * (issue #3). The signature itself is produced in `lib/freighter.ts`; this
+ * function only forwards the payload to the registry/API.
+ *
+ * In mock mode (no VITE_API_URL) we console.log the payload so the full
+ * end-to-end flow is exercisable from the UI without a backend.
+ */
+export async function submitOwnershipClaim(
+  verificationId: string,
+  payload: { signerAddress: string; signedMessage: string },
+): Promise<{ id: string }> {
+  if (useMocks) {
+    console.log('[mock] submitOwnershipClaim', { verificationId, payload })
+    return { id: `mock_claim_${Date.now()}` }
+  }
+  return post(`/v1/verifications/${verificationId}/claim`, payload)
+}
+
+/**
  * Subscribe to the live build log for a verification job (SSE).
  * Returns an unsubscribe function. In mock mode, emits a scripted log.
  */
