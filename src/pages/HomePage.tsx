@@ -1,11 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { TRUST_TIERS } from '../lib/trust'
-import { DEFAULT_NETWORK } from '../lib/api'
+import { useNetwork } from '../contexts/NetworkContext'
 import TrustBadge from '../components/TrustBadge'
 
 export default function HomePage() {
   const navigate = useNavigate()
+  const { network } = useNetwork()
   const [query, setQuery] = useState('')
 
   return (
@@ -23,7 +24,7 @@ export default function HomePage() {
           onSubmit={(e) => {
             e.preventDefault()
             const id = query.trim()
-            if (id) navigate(`/contract/${DEFAULT_NETWORK}/${id}`)
+            if (id) navigate(`/contract/${network}/${id}`)
           }}
         >
           <input
