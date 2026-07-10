@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { BuildLogEvent, Network, Sep58Metadata } from '../types/verification'
-import { DEFAULT_NETWORK, detectSep58Metadata, streamBuildLog, submitVerification } from '../lib/api'
+import { detectSep58Metadata, streamBuildLog, submitVerification } from '../lib/api'
+import { useNetwork } from '../contexts/NetworkContext'
 
 type Step = 'contract' | 'confirm' | 'building' | 'result'
 
@@ -13,9 +14,14 @@ const STEPS: { key: Step; label: string }[] = [
 ]
 
 export default function SubmitWizardPage() {
+  const { network: preferredNetwork } = useNetwork()
   const [step, setStep] = useState<Step>('contract')
   const [contractId, setContractId] = useState('')
-  const [network, setNetwork] = useState<Network>(DEFAULT_NETWORK)
+  // Initialize from the app-level network preference so the wizard respects
+  // whatever the user picked in the header. The user can still override per
+  // submission — the change is local to the wizard and doesn't mutate the
+  // global preference.
+  const [network, setNetwork] = useState<Network>(preferredNetwork)
   const [detecting, setDetecting] = useState(false)
   const [metadata, setMetadata] = useState<Sep58Metadata | null>(null)
   const [sourceRepo, setSourceRepo] = useState('')

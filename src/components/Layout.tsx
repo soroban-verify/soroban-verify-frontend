@@ -1,4 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useNetwork } from '../contexts/NetworkContext'
+import type { Network } from '../types/verification'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `rounded-md px-3 py-2 text-sm font-medium transition-colors ${
@@ -8,6 +10,8 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   }`
 
 export default function Layout() {
+  const { network, setNetwork } = useNetwork()
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-slate-200 bg-white">
@@ -30,6 +34,17 @@ export default function Layout() {
             <NavLink to="/docs/integrations" className={navLinkClass}>
               Integrations
             </NavLink>
+            <label className="ml-2 flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 focus-within:border-indigo-500">
+              <span className="pl-1 text-slate-500">Network:</span>
+              <select
+                value={network}
+                onChange={(e) => setNetwork(e.target.value as Network)}
+                className="border-0 bg-transparent py-0 pr-1 text-xs font-semibold text-slate-700 focus:outline-none"
+              >
+                <option value="mainnet">Mainnet</option>
+                <option value="testnet">Testnet</option>
+              </select>
+            </label>
           </nav>
         </div>
       </header>
