@@ -2,12 +2,18 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Network, VerificationRecord } from '../types/verification'
 import { listVerifications } from '../lib/api'
+import { useNetwork } from '../contexts/NetworkContext'
 import TrustBadge from '../components/TrustBadge'
 
+type ExplorerNetwork = Network | 'all'
+
 export default function ExplorerPage() {
+  const { network: preferredNetwork, setNetwork: setPreferredNetwork } = useNetwork()
   const [records, setRecords] = useState<VerificationRecord[]>([])
   const [query, setQuery] = useState('')
-  const [network, setNetwork] = useState<Network | 'all'>('all')
+  // 'all' is an explorer-only filter layered on top of the app-level network
+  // preference — keeps the existing "all networks" view intact.
+  const [filterNetwork, setFilterNetwork] = useState<ExplorerNetwork>(preferredNetwork)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -16,7 +22,7 @@ export default function ExplorerPage() {
     setLoading(true)
     setError(null)
     listVerifications({
-      network: network === 'all' ? undefined : network,
+      network: filterNetwork === 'all' ? undefined : filterNetwork,
       query: query || undefined,
     })
       .then((r) => {
@@ -31,7 +37,15 @@ export default function ExplorerPage() {
     return () => {
       cancelled = true
     }
-  }, [query, network])
+  }, [query, filterNetwork])
+
+  function handleFilterChange(next: ExplorerNetwork) {
+    setFilterNetwork(next)
+    // Keep the app-level network preference in sync when the user narrows the
+    // explorer to a specific network — the header selector and the explorer
+    // filter should not disagree.
+    if (next !== 'all') setPreferredNetwork(next)
+  }
 
   return (
     <div>
@@ -48,8 +62,8 @@ export default function ExplorerPage() {
           className="w-full max-w-md rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
         />
         <select
-          value={network}
-          onChange={(e) => setNetwork(e.target.value as Network | 'all')}
+          value={filterNetwork}
+          onChange={(e) => handleFilterChange(e.target.value as ExplorerNetwork)}
           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
         >
           <option value="all">All networks</option>

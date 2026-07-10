@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Network } from '../types/verification'
-import { badgeUrl, DEFAULT_NETWORK } from '../lib/api'
+import { badgeUrl } from '../lib/api'
+import { useNetwork } from '../contexts/NetworkContext'
 
 function CopyBlock({ label, code }: { label: string; code: string }) {
   const [copied, setCopied] = useState(false)
@@ -27,8 +28,11 @@ function CopyBlock({ label, code }: { label: string; code: string }) {
 }
 
 export default function BadgesPage() {
+  // The badge form is driven directly by the app-level network preference
+  // so the copy-paste blocks always reflect the currently selected network,
+  // and changing the badge select updates the header selector as well.
+  const { network, setNetwork } = useNetwork()
   const [contractId, setContractId] = useState('CBQHNAXSI55GX2GN6D67GK7BHVPSLJUGZQEU7WJ5LKR5PNUCGLIMAO4K')
-  const [network, setNetwork] = useState<Network>(DEFAULT_NETWORK)
   const svg = badgeUrl(contractId, network)
   const detailPage = `${window.location.origin}/contract/${network}/${contractId}`
 
