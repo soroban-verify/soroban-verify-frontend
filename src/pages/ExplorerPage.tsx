@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import type { Network, VerificationRecord } from '../types/verification'
 import { listVerifications } from '../lib/api'
 import { useNetwork } from '../contexts/NetworkContext'
+import { useDebounce } from '../hooks/useDebounce'
 import TrustBadge from '../components/TrustBadge'
 
 type ExplorerNetwork = Network | 'all'
@@ -11,6 +12,11 @@ export default function ExplorerPage() {
   const { network: preferredNetwork, setNetwork: setPreferredNetwork } = useNetwork()
   const [records, setRecords] = useState<VerificationRecord[]>([])
   const [query, setQuery] = useState('')
+  // Debounce the search query (issue #2): the input stays bound to `query`
+  // for responsive typing, but the API call only fires after the user pauses
+  // for 300 ms. The network filter deliberately stays undebounced — it's a
+  // discrete selection, not a stream of keystrokes.
+  const debouncedQuery = useDebounce(query, 300)
   // 'all' is an explorer-only filter layered on top of the app-level network
   // preference — keeps the existing "all networks" view intact.
   const [filterNetwork, setFilterNetwork] = useState<ExplorerNetwork>(preferredNetwork)
@@ -23,7 +29,7 @@ export default function ExplorerPage() {
     setError(null)
     listVerifications({
       network: filterNetwork === 'all' ? undefined : filterNetwork,
-      query: query || undefined,
+      query: debouncedQuery || undefined,
     })
       .then((r) => {
         if (!cancelled) setRecords(r)
@@ -37,7 +43,7 @@ export default function ExplorerPage() {
     return () => {
       cancelled = true
     }
-  }, [query, filterNetwork])
+  }, [debouncedQuery, filterNetwork])
 
   function handleFilterChange(next: ExplorerNetwork) {
     setFilterNetwork(next)
