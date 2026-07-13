@@ -37,26 +37,61 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export async function listVerifications(params?: {
+/** Params for {@link listVerifications}. Cursor is an opaque pagination
+ * token (a server-issued cursor in production; a stringified offset in mock
+ * dev mode). `limit` defaults to 25. */
+export interface ListVerificationsParams {
   network?: Network
   query?: string
-}): Promise<VerificationRecord[]> {
+  cursor?: string | null
+  limit?: number
+}
+
+/** Shape of {@link listVerifications}'s response. `nextCursor` is `null` at
+ * the end of the result set so the UI can disable its Next control. */
+export interface ListVerificationsResult {
+  records: VerificationRecord[]
+  nextCursor: string | null
+}
+
+/** Default page size for the explorer table — small enough to be fast, large
+ * enough that most result sets fit on one page. */
+export const DEFAULT_LIST_LIMIT = 25
+
+export async function listVerifications(
+  params?: ListVerificationsParams,
+): Promise<ListVerificationsResult> {
+  const limit = params?.limit ?? DEFAULT_LIST_LIMIT
+
   if (useMocks) {
-    let records = MOCK_RECORDS
-    if (params?.network) records = records.filter((r) => r.network === params.network)
+    let filtered = MOCK_RECORDS
+    if (params?.network) {
+      filtered = filtered.filter((r) => r.network === params.network)
+    }
     if (params?.query) {
       const q = params.query.toLowerCase()
-      records = records.filter(
+      filtered = filtered.filter(
         (r) =>
           r.contractId.toLowerCase().includes(q) ||
           r.sourceRepo.toLowerCase().includes(q),
       )
     }
-    return records
+    // Cursor encodes the integer offset into the post-filter result set.
+    // It is reset by ExplorerPage whenever a filter changes, so a stale
+    // cursor from a different filter never lands here in practice — but we
+    // still clamp it defensively to avoid slicing into negative territory.
+    const offset = params?.cursor ? Math.max(0, parseInt(params.cursor, 10) || 0) : 0
+    const records = filtered.slice(offset, offset + limit)
+    const nextOffset = offset + limit
+    const nextCursor = nextOffset < filtered.length ? String(nextOffset) : null
+    return { records, nextCursor }
   }
+
   const search = new URLSearchParams()
   if (params?.network) search.set('network', params.network)
   if (params?.query) search.set('q', params.query)
+  if (params?.cursor) search.set('cursor', params.cursor)
+  if (limit !== DEFAULT_LIST_LIMIT) search.set('limit', String(limit))
   return get(`/v1/verifications?${search}`)
 }
 
