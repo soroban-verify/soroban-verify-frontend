@@ -88,7 +88,21 @@ export async function detectSep58Metadata(
       (r) => r.contractId === contractId && r.network === network,
     )
     if (!record) return null
-    return { sourceRepo: record.sourceRepo, commit: record.commit }
+    // In mock mode we surface everything the on-chain SEP-58 metadata would
+    // carry so the wizard's auto-populate path is exercisable in dev. Real
+    // API responses already include buildImage / buildCommand when the
+    // contract embeds them.
+    return {
+      sourceRepo: record.sourceRepo,
+      commit: record.commit,
+      buildImage: record.buildEnvironment.image,
+      buildCommand:
+        // One of the mock fixtures advertises a custom build command so the
+        // auto-populate branch is visible during local testing.
+        record.id === 'ver_02'
+          ? 'cargo build --target wasm32v1-none --release'
+          : undefined,
+    }
   }
   return get(`/v1/contracts/${network}/${contractId}/sep58`)
 }

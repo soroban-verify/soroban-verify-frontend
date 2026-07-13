@@ -27,6 +27,7 @@ export default function SubmitWizardPage() {
   const [sourceRepo, setSourceRepo] = useState('')
   const [commit, setCommit] = useState('')
   const [buildImage, setBuildImage] = useState('')
+  const [buildCommand, setBuildCommand] = useState('')
   const [log, setLog] = useState<BuildLogEvent[]>([])
   const [error, setError] = useState<string | null>(null)
   const logEndRef = useRef<HTMLDivElement>(null)
@@ -45,6 +46,7 @@ export default function SubmitWizardPage() {
         setSourceRepo(meta.sourceRepo)
         setCommit(meta.commit)
         if (meta.buildImage) setBuildImage(meta.buildImage)
+        if (meta.buildCommand) setBuildCommand(meta.buildCommand)
       }
       setStep('confirm')
     } catch (e) {
@@ -63,6 +65,7 @@ export default function SubmitWizardPage() {
         sourceRepo: sourceRepo.trim(),
         commit: commit.trim(),
         buildImage: buildImage.trim() || undefined,
+        buildCommand: buildCommand.trim() || undefined,
       })
       setStep('building')
       setLog([])
@@ -184,6 +187,24 @@ export default function SubmitWizardPage() {
                 Supplying your own image lowers the trust tier to
                 “deployer-supplied”: a hostile image can deterministically
                 rewrite bytes and still pass byte-comparison.
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700">
+                Build command <span className="font-normal text-slate-400">(optional — overrides the image’s default build step)</span>
+              </label>
+              <input
+                value={buildCommand}
+                onChange={(e) => setBuildCommand(e.target.value)}
+                placeholder="cargo build --target wasm32v1-none --release"
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm focus:border-indigo-500 focus:outline-none"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Only set this when the repo’s build step differs from the
+                image’s default. Pre-filled automatically when SEP-58 metadata
+                carries a <code className="font-mono">buildCommand</code>. Leaving
+                it blank sends <code className="font-mono">undefined</code> so
+                the API runs the image’s built-in command.
               </p>
             </div>
             <div className="flex gap-2">
